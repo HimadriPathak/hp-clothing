@@ -2,11 +2,13 @@ import { applyMiddleware, compose, createStore } from "redux";
 import logger from "redux-logger";
 import { persistReducer, persistStore } from "redux-persist";
 import storage from "redux-persist/lib/storage";
+import { thunk } from "redux-thunk";
 import { rootReducer } from "./root-reducer";
 
-const middleWares = [process.env.NODE_ENV !== "production" && logger].filter(
-  Boolean
-);
+const middleWares = [
+  process.env.NODE_ENV !== "production" && logger,
+  thunk,
+].filter(Boolean);
 
 //NOTE - this is a curry function (function which returns another function) we can create our own logger below is an example
 // const loggerMiddleware = (store) => (next) => (action) => {
@@ -23,7 +25,8 @@ const middleWares = [process.env.NODE_ENV !== "production" && logger].filter(
 const persistConfig = {
   key: "root",
   storage,
-  blacklist: ["user"],
+  //   blacklist: ["user"],
+  whitelist: ["cart"],
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
