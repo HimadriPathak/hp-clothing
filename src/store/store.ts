@@ -1,10 +1,20 @@
-import { applyMiddleware, compose, createStore } from "redux";
-import logger from "redux-logger";
-import { persistReducer, persistStore } from "redux-persist";
+import { applyMiddleware, compose, createStore, Middleware } from "redux";
+import { PersistConfig, persistReducer, persistStore } from "redux-persist";
 import storage from "redux-persist/lib/storage";
 import createSagaMiddleware from "redux-saga";
-import { rootReducer } from "./root-reducer";
+
 import { rootSaga } from "./root-saga";
+
+import logger from "redux-logger";
+import { rootReducer } from "./root-reducer";
+
+export type RootState = ReturnType<typeof rootReducer>;
+
+declare global {
+  interface Window {
+    __REDUX_DEVTOOLS_EXTENSION_COMPOSE__?: typeof compose;
+  }
+}
 
 //REVIEW - middleWare used for thunk
 // const middleWares = [
@@ -13,18 +23,12 @@ import { rootSaga } from "./root-saga";
 // ].filter(Boolean);
 
 //NOTE - this is a curry function (function which returns another function) we can create our own logger below is an example
-// const loggerMiddleware = (store) => (next) => (action) => {
-//   if (!action.type) return next(action);
-//   console.log("type: ", action.type);
-//   console.log("payload: ", action.payload);
-//   console.log("currentState: ", store.getState());
+//LINK - custom middleware in store/middleware/logger.ts
 
-//   next(action);
-
-//   console.log("next state: ", store.getState());
-// };
-
-const persistConfig = {
+type ExtendedPersistConfig = PersistConfig<RootState> & {
+  whitelist: (keyof RootState)[];
+};
+const persistConfig: ExtendedPersistConfig = {
   key: "root",
   storage,
   //   blacklist: ["user"],
@@ -35,7 +39,7 @@ const sagaMiddleware = createSagaMiddleware();
 const middleWares = [
   process.env.NODE_ENV !== "production" && logger,
   sagaMiddleware,
-].filter(Boolean);
+].filter((middleware): middleware is Middleware => Boolean(middleware));
 const persistedReducer = persistReducer(persistConfig, rootReducer);
 const composeEnhancer =
   (process.env.NODE_ENV !== "production" &&
